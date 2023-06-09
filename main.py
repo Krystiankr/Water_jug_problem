@@ -118,6 +118,8 @@ while True:
 
             for bucket in buckets:
                 if bucket.rect.colliderect(mouse_rect):
+                    if bucket.amount == 0:
+                        continue
                     # The user clicked on the current bucket
                     selected_bucket = bucket
                     # Get transfer options for the selected bucket
@@ -194,13 +196,13 @@ while True:
 
     # Draw transfer options popup if a bucket is selected
     if selected_bucket:
-        popup_width = 150
+        popup_width = 100
         popup_height = 30 * len(transfer_options)
         popup_x = selected_bucket.x + 30
         popup_y = selected_bucket.y - popup_height
         pygame.draw.rect(screen, (255, 255, 255), (popup_x, popup_y, popup_width, popup_height))
         for i, option in enumerate(transfer_options):
-            option_text = f"Transfer to Bucket {option.capacity}"
+            option_text = f"Bucket {option.capacity}"
             option_rect = pygame.Rect(popup_x, popup_y + 30 * i, popup_width, 30)
             pygame.draw.rect(screen, (200, 200, 200), option_rect)
             font = pygame.font.SysFont(None, 24)
