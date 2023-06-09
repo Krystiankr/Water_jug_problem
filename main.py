@@ -50,18 +50,59 @@ class Bucket:
 
 
 class StateGraph:
-    def __init__(self, capacities):
-        self.capacities = capacities
-        self.graph = {}
-        self.build_graph()
+    def __init__(self, screen):
+        self.nodes = []
+        self.edges = []
+        self.screen = screen
+        self.font = pygame.font.SysFont(None, 20)
 
-    def build_graph(self):
-        pass
-        # Logic to build state graph
+    def add_node(self, state):
+        if state not in [node["state"] for node in self.nodes]:
+            x, y = self.get_custom_position(state)
+            self.nodes.append({
+                "state": state,
+                "x": x,
+                "y": y
+            })
 
-    def draw(self, screen):
-        pass
-        # Draw the graph using pygame.draw.line() and pygame.draw.circle() functions
+    def add_edge(self, state1, state2):
+        self.edges.append((state1, state2))
+
+    def draw(self):
+        for edge in self.edges:
+            state1, state2 = edge
+            x1, y1 = self.get_position_of_state(state1)
+            x2, y2 = self.get_position_of_state(state2)
+            pygame.draw.line(self.screen, (0, 0, 255), (x1, y1), (x2, y2), 2)
+
+        for node in self.nodes:
+            x, y = node["x"], node["y"]
+            pygame.draw.circle(self.screen, (0, 255, 0), (x, y), 20)
+            text = self.font.render(str(node["state"]), True, (0, 0, 0))
+            self.screen.blit(text, (x - 10, y - 10))
+
+    def get_position_of_state(self, state):
+        for node in self.nodes:
+            if node["state"] == state:
+                return node["x"], node["y"]
+        return None
+
+    def get_custom_position(self, state):
+        # Customize the positions of certain states
+        screen_width, screen_height = screen.get_size()
+        positions = {
+            (8, 0, 0): (500, 370),
+            (5, 0, 3): (600, 370),
+            (3, 5, 0): (500, 270),
+            (0, 5, 3): (600, 270)
+        }
+
+        if state in positions:
+            return positions[state]
+
+        # For other states, position them linearly (as example)
+        return len(self.nodes) * 100 + 50, screen_height // 2
+
 
 def update(self):
     # Update the graph when the user pours water between the buckets
@@ -84,7 +125,7 @@ buckets[0].fill(8)
 buckets[1].fill(0)
 buckets[2].fill(0)
 
-state_graph = StateGraph([8, 5, 3])
+
 selected_bucket = None
 transfer_options = []
 history = []
@@ -92,7 +133,7 @@ current_state_label = pygame.font.SysFont(None, 24)
 bucket_amounts_label = pygame.font.SysFont(None, 24)
 state_history = []
 mouse_pos = pygame.mouse.get_pos()  # Move the mouse_pos declaration before the event loop
-
+state_graph = StateGraph(screen)
 
 while True:
     screen.blit(background, (0, 0))
@@ -102,13 +143,15 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.MOUSEMOTION:
-            mouse_pos = pygame.mouse.get_pos()  # Get the current mouse position
+            mouse_pos = pygame.mouse.get_pos()
             mouse_rect = pygame.Rect(mouse_pos[0], mouse_pos[1], 1, 1)
-
-            # Check if the mouse is hovering over any bucket
+            hovered_bucket = None
             for bucket in buckets:
                 if bucket.rect.colliderect(mouse_rect):
                     bucket.highlighted = True
+                    # Check if the bucket is not empty
+                    if bucket.amount > 0:
+                        hovered_bucket = bucket
                 else:
                     bucket.highlighted = False
 
@@ -141,8 +184,8 @@ while True:
                     selected_bucket.amount -= amount_to_transfer
                     destination_bucket.fill(amount_to_transfer)
                     selected_bucket = None  # Reset the selected bucket
-                    history.append((selected_bucket, destination_bucket, amount_to_transfer))
-                    state_history.append(tuple(bucket.amount for bucket in buckets))
+                    # history.append((selected_bucket, destination_bucket, amount_to_transfer))
+                    # state_history.append(tuple(bucket.amount for bucket in buckets))
                     for bucket in buckets:
                         print(f"Bucket {bucket.capacity}: {bucket.amount} liters")
                     print(state_history)
@@ -179,13 +222,13 @@ while True:
         bucket.draw(screen)
         bucket.refresh_image()
 
-    state_graph.draw(screen)
+
 
     current_state_text = ', '.join(str(bucket.amount) for bucket in buckets)
     current_state_surface = current_state_label.render(f"Current State: {current_state_text}", True, (0, 0, 0))
     screen.blit(current_state_surface, (20, 20))
 
-
+    state_graph.draw()
 
     # Display bucket amounts
     for i, _prev_state in enumerate(state_history):
@@ -193,13 +236,12 @@ while True:
         bucket_amounts_surface = bucket_amounts_label.render(bucket_amounts_text, True, (0, 0, 0))
         screen.blit(bucket_amounts_surface, (700, 50 + i * 30))
 
-
     # Draw transfer options popup if a bucket is selected
-    if selected_bucket:
+    if hovered_bucket:
         popup_width = 100
         popup_height = 30 * len(transfer_options)
-        popup_x = selected_bucket.x + 30
-        popup_y = selected_bucket.y - popup_height
+        popup_x = hovered_bucket.x + 30
+        popup_y = hovered_bucket.y - popup_height
         pygame.draw.rect(screen, (255, 255, 255), (popup_x, popup_y, popup_width, popup_height))
         for i, option in enumerate(transfer_options):
             option_text = f"Bucket {option.capacity}"
@@ -210,4 +252,12 @@ while True:
             text_rect = text.get_rect(center=option_rect.center)
             screen.blit(text, text_rect)
 
+        new_state = tuple(bucket.amount for bucket in buckets)
+        state_graph.add_node(new_state)
+        state_graph.draw()
+        # if state_history:
+        #     prev_state = state_history[-1]
+        #     state_graph.add_edge(prev_state, new_state)
+        # state_history.append(new_state)
+    #pygame.draw.circle(screen, (0, 255, 0), (500, 370), 20)
     pygame.display.flip()
