@@ -119,7 +119,9 @@ def update(self):
         graph.update()
 
 def win_effects():
+    pygame.mixer.music.set_volume(1)
     victory_sound.play()  # Play the victory sound
+    pygame.mixer.music.set_volume(0.2)
     screen.blit(victory_image, victory_image_rect)  # Display the victory image
     font = pygame.font.Font(None, 36)
     # Render "Congratulations!" text
@@ -189,6 +191,11 @@ reset_button_rect = pygame.Rect(200, 10, 100, 40)
 win_button_rect = pygame.Rect(320, 10, 110, 40)
 
 step = 0
+
+pygame.mixer.music.load("Sounds/lake_5min.mp3")
+pygame.mixer.music.set_volume(0.2)
+pygame.mixer.music.play(-1)  # -1 means loop indefinitely
+
 
 while True:
     screen.blit(background, (0, 0))
@@ -263,7 +270,9 @@ while True:
                 option_clicked = (mouse_pos[0] >= popup_x and mouse_pos[0] <= popup_x + 150 and
                                   mouse_pos[1] >= popup_y and mouse_pos[1] <= popup_y + 30 * len(transfer_options))
                 if option_clicked:
+                    pygame.mixer.music.set_volume(1)
                     transfer_sound.play()
+                    pygame.mixer.music.set_volume(0.2)
 
                     option_index = (mouse_pos[1] - popup_y) // 30
                     destination_bucket = transfer_options[option_index]
